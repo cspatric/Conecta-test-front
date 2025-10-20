@@ -8,8 +8,8 @@
               type="button"
               @click="goBack"
               class="w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 transition grid place-items-center"
-              aria-label="Voltar"
-              title="Voltar"
+              :aria-label="$t('app.actions.back', 'Voltar')"
+              :title="$t('app.actions.back', 'Voltar')"
             >
               <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="white" stroke-width="2">
                 <path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round" />
@@ -17,11 +17,11 @@
             </button>
 
             <div class="text-white">
-              <div class="text-sm/5 opacity-90">Contato</div>
+              <div class="text-sm/5 opacity-90">{{ $t('app.contact.title', 'Contato') }}</div>
               <div class="text-xl font-semibold -mt-0.5">
                 {{ contact?.displayName || '—' }}
               </div>
-              <div v-if="loading" class="text-white/80 text-xs mt-0.5">carregando…</div>
+              <div v-if="loading" class="text-white/80 text-xs mt-0.5">{{ $t('app.loading', 'carregando…') }}</div>
             </div>
           </div>
 
@@ -30,8 +30,8 @@
               v-if="primaryEmail"
               type="button"
               class="w-10 h-10 rounded-xl bg-white/15 hover:bg-white/20 transition grid place-items-center"
-              aria-label="Enviar email"
-              title="Enviar email"
+              :aria-label="$t('app.actions.email', 'Enviar email')"
+              :title="$t('app.actions.email', 'Enviar email')"
               @click="openCompose(primaryEmail)"
             >
               <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="white" stroke-width="1.8">
@@ -40,12 +40,22 @@
               </svg>
             </button>
 
+            <button
+              type="button"
+              class="w-10 h-10 rounded-xl bg-white/15 hover:bg-white/20 transition grid place-items-center text-white text-sm font-semibold"
+              :aria-label="$t('app.actions.language', 'Idioma')"
+              :title="$t('app.actions.language', 'Idioma')"
+              @click="toggleLanguage"
+            >
+              {{ locale === 'pt-BR' ? 'EN' : 'PT' }}
+            </button>
+
             <a
               v-if="primaryPhone"
               :href="`tel:${primaryPhone}`"
               class="w-10 h-10 rounded-xl bg-white/15 hover:bg-white/20 transition grid place-items-center"
-              aria-label="Ligar"
-              title="Ligar"
+              :aria-label="$t('app.actions.call', 'Ligar')"
+              :title="$t('app.actions.call', 'Ligar')"
             >
               <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="white" stroke-width="1.8">
                 <path
@@ -67,34 +77,34 @@
         <template v-else>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="space-y-1">
-              <div class="text-xs uppercase tracking-wide text-[#6B7280]">Nome</div>
+              <div class="text-xs uppercase tracking-wide text-[#6B7280]">{{ $t('app.contact.name', 'Nome') }}</div>
               <div class="text-[#111827] font-medium">{{ contact?.displayName || '—' }}</div>
             </div>
             <div class="space-y-1">
-              <div class="text-xs uppercase tracking-wide text-[#6B7280]">Empresa</div>
+              <div class="text-xs uppercase tracking-wide text-[#6B7280]">{{ $t('app.contact.company', 'Empresa') }}</div>
               <div class="text-[#111827] font-medium">{{ contact?.companyName || '—' }}</div>
             </div>
             <div class="space-y-1">
-              <div class="text-xs uppercase tracking-wide text-[#6B7280]">Cargo</div>
+              <div class="text-xs uppercase tracking-wide text-[#6B7280]">{{ $t('app.contact.titleLabel', 'Cargo') }}</div>
               <div class="text-[#111827] font-medium">{{ contact?.jobTitle || '—' }}</div>
             </div>
             <div class="space-y-1">
-              <div class="text-xs uppercase tracking-wide text-[#6B7280]">Departamento</div>
+              <div class="text-xs uppercase tracking-wide text-[#6B7280]">{{ $t('app.contact.department', 'Departamento') }}</div>
               <div class="text-[#111827] font-medium">{{ contact?.department || '—' }}</div>
             </div>
             <div class="space-y-1">
-              <div class="text-xs uppercase tracking-wide text-[#6B7280]">Local</div>
+              <div class="text-xs uppercase tracking-wide text-[#6B7280]">{{ $t('app.contact.location', 'Local') }}</div>
               <div class="text-[#111827] font-medium">{{ contact?.officeLocation || '—' }}</div>
             </div>
             <div class="space-y-1">
-              <div class="text-xs uppercase tracking-wide text-[#6B7280]">Aniversário</div>
+              <div class="text-xs uppercase tracking-wide text-[#6B7280]">{{ $t('app.contact.birthday', 'Aniversário') }}</div>
               <div class="text-[#111827] font-medium">{{ birthdayLabel }}</div>
             </div>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-3">
-              <div class="text-sm font-semibold text-[#111827]">Emails</div>
+              <div class="text-sm font-semibold text-[#111827]">{{ $t('app.contact.emails', 'Emails') }}</div>
               <ul class="space-y-2">
                 <li v-for="e in emails" :key="e.address" class="flex items-center justify-between">
                   <a :href="`mailto:${e.address}`" class="text-[#374151] hover:text-[#5235E8] truncate">{{ e.address }}</a>
@@ -103,7 +113,7 @@
                     class="ml-3 text-xs px-2 py-1 rounded-lg border border-[#E5E7EB] hover:bg-[#F3F4F6]"
                     @click="copy(e.address)"
                   >
-                    copiar
+                    {{ $t('app.actions.copy', 'copiar') }}
                   </button>
                 </li>
                 <li v-if="emails.length === 0" class="text-[#6B7280]">—</li>
@@ -111,7 +121,7 @@
             </div>
 
             <div class="space-y-3">
-              <div class="text-sm font-semibold text-[#111827]">Telefones</div>
+              <div class="text-sm font-semibold text-[#111827]">{{ $t('app.contact.phones', 'Telefones') }}</div>
               <ul class="space-y-2">
                 <li v-for="p in phones" :key="p.value" class="flex items-center justify-between">
                   <a :href="`tel:${p.value}`" class="text-[#374151] hover:text-[#5235E8] truncate">{{ p.label }}</a>
@@ -120,7 +130,7 @@
                     class="ml-3 text-xs px-2 py-1 rounded-lg border border-[#E5E7EB] hover:bg-[#F3F4F6]"
                     @click="copy(p.value)"
                   >
-                    copiar
+                    {{ $t('app.actions.copy', 'copiar') }}
                   </button>
                 </li>
                 <li v-if="phones.length === 0" class="text-[#6B7280]">—</li>
@@ -130,11 +140,11 @@
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-2">
-              <div class="text-sm font-semibold text-[#111827]">IDs de Mensageria</div>
+              <div class="text-sm font-semibold text-[#111827]">{{ $t('app.contact.im', 'IDs de Mensageria') }}</div>
               <div class="text-[#374151]">{{ (contact?.imAddresses && contact?.imAddresses.join(', ')) || '—' }}</div>
             </div>
             <div class="space-y-2">
-              <div class="text-sm font-semibold text-[#111827]">Categorias</div>
+              <div class="text-sm font-semibold text-[#111827]">{{ $t('app.contact.categories', 'Categorias') }}</div>
               <div class="flex flex-wrap gap-2">
                 <span
                   v-for="c in contact?.categories || []"
@@ -149,16 +159,16 @@
           </div>
 
           <div class="space-y-2">
-            <div class="text-sm font-semibold text-[#111827]">Notas</div>
+            <div class="text-sm font-semibold text-[#111827]">{{ $t('app.contact.notes', 'Notas') }}</div>
             <div class="text-[#374151] whitespace-pre-wrap">{{ contact?.personalNotes || '—' }}</div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
             <div class="text-xs text-[#6B7280]">
-              Criado em: <span class="text-[#374151]">{{ formatDate(contact?.createdDateTime) }}</span>
+              {{ $t('app.contact.createdAt', 'Criado em:') }} <span class="text-[#374151]">{{ formatDate(contact?.createdDateTime) }}</span>
             </div>
             <div class="text-xs text-[#6B7280]">
-              Atualizado em: <span class="text-[#374151]">{{ formatDate(contact?.lastModifiedDateTime) }}</span>
+              {{ $t('app.contact.updatedAt', 'Atualizado em:') }} <span class="text-[#374151]">{{ formatDate(contact?.lastModifiedDateTime) }}</span>
             </div>
           </div>
         </template>
@@ -179,6 +189,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import EmailComposeModal from '../../Pages/Home/Components/EmailComposeModal.vue'
 import { getContactDetails } from '../../services/contacts'
+import { useI18n } from 'vue-i18n'
+import { setLocale } from '../../i18n'
 
 type Email = { address: string; name?: string }
 type Contact = {
@@ -200,6 +212,13 @@ type Contact = {
   categories?: string[]
   createdDateTime?: string | null
   lastModifiedDateTime?: string | null
+}
+
+const { t, locale } = useI18n()
+
+function toggleLanguage() {
+  const next = locale.value === 'pt-BR' ? 'en' : 'pt-BR'
+  setLocale(next)
 }
 
 const router = useRouter()
@@ -231,7 +250,7 @@ try {
 async function fetchDetails() {
   const id = String(route.params.id || '')
   if (!id) {
-    error.value = 'ID do contato não informado'
+    error.value = t('app.contact.errors.missingId', 'ID do contato não informado')
     return
   }
   loading.value = true
@@ -242,7 +261,7 @@ async function fetchDetails() {
       'id,displayName,givenName,surname,emailAddresses,businessPhones,homePhones,mobilePhone,companyName,jobTitle,department,officeLocation,imAddresses,birthday,personalNotes,categories,createdDateTime,lastModifiedDateTime'
     )
   } catch (e: any) {
-    error.value = e?.response?.data?.message || e?.message || 'Erro ao carregar contato'
+    error.value = e?.response?.data?.message || e?.message || t('app.contact.errors.loadFail', 'Erro ao carregar contato')
   } finally {
     loading.value = false
   }

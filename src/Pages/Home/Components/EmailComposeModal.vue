@@ -1,4 +1,3 @@
-<!-- src/components/EmailComposeModal.vue -->
 <template>
   <teleport to="body">
     <div v-if="open" class="fixed inset-0 z-50" @keydown.esc.prevent.stop="onClose">
@@ -13,11 +12,11 @@
       >
         <div class="flex items-center justify-between mb-4">
           <h2 id="email-modal-title" class="text-lg font-semibold text-[#111827]">
-            Enviar e-mail
+            {{ $t('app.compose.title', 'Enviar e-mail') }}
           </h2>
           <button
             class="w-9 h-9 grid place-items-center rounded-xl hover:bg-[#F3F4F6] transition"
-            aria-label="Fechar"
+            :aria-label="$t('app.actions.close', 'Fechar')"
             @click="onClose"
             :disabled="submitting"
           >
@@ -36,12 +35,12 @@
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-[#6B7280] mb-1">Para</label>
+            <label class="block text-xs font-medium text-[#6B7280] mb-1">{{ $t('app.compose.to', 'Para') }}</label>
             <input
               ref="firstInputRef"
               v-model.trim="toField"
               type="text"
-              placeholder="ex: pessoa@empresa.com, outro@dominio.com"
+              :placeholder="$t('app.compose.toPlaceholder', 'ex: pessoa@empresa.com, outro@dominio.com')"
               class="w-full h-11 rounded-xl border border-[#E5E7EB] bg-white px-3 text-[#374151] text-sm outline-none
                      focus:ring-2 focus:ring-[#5A3EF0]/30 focus:border-[#5A3EF0]"
             />
@@ -49,11 +48,11 @@
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-[#6B7280] mb-1">Assunto</label>
+            <label class="block text-xs font-medium text-[#6B7280] mb-1">{{ $t('app.compose.subject', 'Assunto') }}</label>
             <input
               v-model.trim="subject"
               type="text"
-              placeholder="Assunto do e-mail"
+              :placeholder="$t('app.compose.subjectPlaceholder', 'Assunto do e-mail')"
               class="w-full h-11 rounded-xl border border-[#E5E7EB] bg-white px-3 text-[#374151] text-sm outline-none
                      focus:ring-2 focus:ring-[#5A3EF0]/30 focus:border-[#5A3EF0]"
             />
@@ -61,11 +60,11 @@
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-[#6B7280] mb-1">Mensagem</label>
+            <label class="block text-xs font-medium text-[#6B7280] mb-1">{{ $t('app.compose.body', 'Mensagem') }}</label>
             <textarea
               v-model="body"
               rows="7"
-              placeholder="Escreva sua mensagem…"
+              :placeholder="$t('app.compose.bodyPlaceholder', 'Escreva sua mensagem…')"
               class="w-full rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-[#374151] text-sm outline-none
                      focus:ring-2 focus:ring-[#5A3EF0]/30 focus:border-[#5A3EF0] resize-y"
             />
@@ -79,15 +78,15 @@
               @click="onClose"
               :disabled="submitting"
             >
-              Cancelar
+              {{ $t('app.actions.cancel', 'Cancelar') }}
             </button>
             <button
               type="submit"
               class="h-11 px-5 rounded-xl bg-[#5235E8] text-white font-medium hover:bg-[#4b2fe2] transition disabled:opacity-60"
               :disabled="submitting"
             >
-              <span v-if="!submitting">Enviar</span>
-              <span v-else>Enviando…</span>
+              <span v-if="!submitting">{{ $t('app.actions.send', 'Enviar') }}</span>
+              <span v-else>{{ $t('app.compose.sending', 'Enviando…') }}</span>
             </button>
           </div>
         </form>
@@ -98,20 +97,18 @@
 
 <script setup lang="ts">
 import { ref, nextTick, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { sendMail } from '../../../services/mail'
 
-// ✅ props
+const { t } = useI18n()
+
 const props = defineProps<{ open: boolean; to?: string | string[] }>()
 
-// ✅ declare os eventos aceitos
 const emit = defineEmits<{
   (e: 'update:open', value: boolean): void
   (e: 'close'): void
   (e: 'submit', payload: { to: string[]; subject: string; body: string }): void
 }>()
-
-// (opcional) se quiser “cair” listeners/attrs no container do modal:
-// defineOptions({ inheritAttrs: false })
 
 const firstInputRef = ref<HTMLInputElement | null>(null)
 const toField = ref('')
@@ -148,8 +145,6 @@ function clearForm() {
 
 function onClose() {
   if (submitting.value) return
-  // ❌ props.open = false
-  // ✅ emite para o v-model:open do pai
   emit('update:open', false)
   emit('close')
 }
@@ -168,10 +163,10 @@ function isValidEmail(e: string) {
 function validate() {
   errors.value = {}
   const emails = parseEmails(toField.value)
-  if (!emails.length) errors.value.to = 'Informe pelo menos um destinatário.'
-  else if (!emails.every(isValidEmail)) errors.value.to = 'Há e-mail inválido na lista.'
-  if (!subject.value.trim()) errors.value.subject = 'Assunto é obrigatório.'
-  if (!body.value.trim()) errors.value.body = 'Mensagem é obrigatória.'
+  if (!emails.length) errors.value.to = t('app.compose.errors.toRequired', 'Informe pelo menos um destinatário.')
+  else if (!emails.every(isValidEmail)) errors.value.to = t('app.compose.errors.toInvalid', 'Há e-mail inválido na lista.')
+  if (!subject.value.trim()) errors.value.subject = t('app.compose.errors.subjectRequired', 'Assunto é obrigatório.')
+  if (!body.value.trim()) errors.value.body = t('app.compose.errors.bodyRequired', 'Mensagem é obrigatória.')
   return Object.keys(errors.value).length === 0
 }
 
@@ -190,16 +185,15 @@ async function handleSubmit() {
 
   try {
     await sendMail(payload)
-    serverSuccess.value = '✅ E-mail enviado com sucesso!'
-    emit('submit', payload) // ✅ opcional, se quiser notificar o pai
-    // fecha modal via v-model
+    serverSuccess.value = t('app.compose.success', '✅ E-mail enviado com sucesso!')
+    emit('submit', payload)
     emit('update:open', false)
   } catch (e: any) {
     serverError.value =
       e?.response?.data?.message ||
       e?.response?.data?.error ||
       e?.message ||
-      'Falha ao enviar o e-mail.'
+      t('app.compose.errors.fail', 'Falha ao enviar o e-mail.')
   } finally {
     submitting.value = false
   }

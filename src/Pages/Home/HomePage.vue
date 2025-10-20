@@ -10,7 +10,7 @@
               </div>
             </div>
             <div class="text-white">
-              <div class="text-sm/5 opacity-90">Boa {{ greeting }},</div>
+              <div class="text-sm/5 opacity-90">{{ $t('app.greetPrefix') }} {{ greeting }},</div>
               <div class="text-xl font-semibold -mt-0.5">{{ displayName }}</div>
             </div>
           </div>
@@ -19,8 +19,8 @@
             <button
               type="button"
               class="w-10 h-10 rounded-xl bg-white/15 hover:bg-white/20 transition grid place-items-center"
-              aria-label="E-mails"
-              title="Ver e-mails"
+              :aria-label="$t('app.actions.email')"
+              :title="$t('app.actions.email')"
               @click="goToMail"
             >
               <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="white" stroke-width="1.8">
@@ -31,10 +31,20 @@
 
             <button
               type="button"
+              class="w-10 h-10 rounded-xl bg-white/15 hover:bg-white/20 transition grid place-items-center text-white text-sm font-semibold"
+              :aria-label="$t('app.actions.language')"
+              :title="$t('app.actions.language')"
+              @click="toggleLanguage"
+            >
+              {{ locale === 'pt-BR' ? 'EN' : 'PT' }}
+            </button>
+
+            <button
+              type="button"
               class="w-10 h-10 rounded-xl bg-white/15 hover:bg-white/20 transition grid place-items-center disabled:opacity-50"
               :disabled="loggingOut"
-              aria-label="Sair"
-              title="Sair"
+              :aria-label="$t('app.actions.logout')"
+              :title="$t('app.actions.logout')"
               @click="logout"
             >
               <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="white" stroke-width="1.8">
@@ -54,7 +64,7 @@
           v-model="selectedDomain"
           class="w-full sm:w-[220px] h-11 rounded-xl border border-[#E5E7EB] bg-white px-3 text-[#374151] text-sm outline-none focus:ring-2 focus:ring-[#5A3EF0]/30 focus:border-[#5A3EF0]"
         >
-          <option :value="''">Todos os domínios</option>
+          <option :value="''">{{ $t('app.contacts.allDomains', 'Todos os domínios') }}</option>
           <option v-for="d in domains" :key="d" :value="d">{{ d }}</option>
         </select>
 
@@ -71,14 +81,14 @@
           <input
             v-model.trim="q"
             type="text"
-            placeholder="Pesquisar por nome ou email..."
+            :placeholder="$t('app.search.contactsPlaceholder')"
             class="w-full h-11 rounded-xl border border-[#E5E7EB] bg-white pl-10 pr-4 text-sm text-[#374151] outline-none focus:ring-2 focus:ring-[#5A3EF0]/30 focus:border-[#5A3EF0]"
           />
         </div>
       </div>
 
       <div v-if="loading" class="mt-5 bg-white rounded-2xl shadow-sm border border-black/5 p-5">
-        Carregando contatos…
+        {{ $t('app.contacts.loading') }}
       </div>
       <div v-else-if="error" class="mt-5 bg-white rounded-2xl shadow-sm border border-red-200 p-5 text-red-600">
         {{ error }}
@@ -87,9 +97,9 @@
       <div v-else class="mt-5 bg-white rounded-2xl shadow-sm border border-black/5">
         <div class="px-5 py-3 text-[#4B5563] text-[15px] font-medium grid grid-cols-[auto_1fr_1fr_auto] items-center gap-3">
           <span></span>
-          <span>nome</span>
-          <span>email</span>
-          <span class="text-right pr-1">ação</span>
+          <span>{{ $t('app.contacts.headerName') }}</span>
+          <span>{{ $t('app.contacts.headerEmail') }}</span>
+          <span class="text-right pr-1">{{ $t('app.contacts.headerAction') }}</span>
         </div>
       </div>
 
@@ -109,8 +119,8 @@
             <button
               type="button"
               class="ml-auto w-10 h-10 grid place-items-center rounded-xl border border-[#E5E7EB] hover:bg-[#F3F4F6] transition"
-              aria-label="Detalhes"
-              title="Ver detalhes"
+              :aria-label="$t('app.actions.details')"
+              :title="$t('app.actions.details')"
               @click="openDetails(c)"
             >
               <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="#5235E8" stroke-width="1.8">
@@ -121,24 +131,16 @@
           </li>
 
           <li v-if="filtered.length === 0" class="px-5 py-6 text-[#6B7280]">
-            Nenhum contato encontrado.
+            {{ $t('app.contacts.none') }}
           </li>
         </ul>
       </div>
     </main>
 
-    <div
-      v-if="showFabActions"
-      class="fixed inset-0 z-40"
-      @click="toggleFab(false)"
-    ></div>
+    <div v-if="showFabActions" class="fixed inset-0 z-40" @click="toggleFab(false)"></div>
 
     <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-      <transition-group
-        name="fab"
-        tag="div"
-        class="flex flex-col items-center gap-3"
-      >
+      <transition-group name="fab" tag="div" class="flex flex-col items-center gap-3">
         <button
           v-if="showFabActions"
           key="manual"
@@ -146,7 +148,7 @@
           class="px-4 h-11 rounded-full bg-white text-[#111827] border border-[#E5E7EB] shadow-sm hover:bg-[#F3F4F6] transition"
           @click.stop="openCreateManual"
         >
-          Manualmente
+          {{ $t('app.actions.manual') }}
         </button>
 
         <button
@@ -156,14 +158,14 @@
           class="px-4 h-11 rounded-full bg-white text-[#111827] border border-[#E5E7EB] shadow-sm hover:bg-[#F3F4F6] transition"
           @click.stop="openGemini"
         >
-          Gemini
+          {{ $t('app.actions.ai') }}
         </button>
 
         <button
           key="main"
           type="button"
           class="px-10 h-16 rounded-[28px] bg-[#5235E8] hover:bg-[#4b2fe2] text-white font-semibold text-lg shadow-lg"
-          aria-label="Adicionar"
+          :aria-label="$t('app.actions.add')"
           @click.stop="toggleFab()"
         >
           <span class="text-2xl leading-none">+</span>
@@ -171,11 +173,7 @@
       </transition-group>
     </div>
 
-    <EmailComposeModal
-      v-model:open="composeOpen"
-      :to="composeTo"
-    />
-
+    <EmailComposeModal v-model:open="composeOpen" :to="composeTo" />
     <AiChatModal
       :open="aiOpen"
       :system-goal="'Ajudar a gerenciar contatos e e-mails.'"
@@ -195,21 +193,29 @@ import { useAuthStore } from '../../stores/auth'
 import EmailComposeModal from '../../Pages/Home/Components/EmailComposeModal.vue'
 import AiChatModal from '../../Pages/Home/Components/AiChatModal.vue'
 import { authLogout } from '../../services/auth'
+import { useI18n } from 'vue-i18n'
+import { setLocale } from '../../i18n'
 
 type ContactItem = { id: string; displayName?: string; email: string }
 
 const router = useRouter()
 const auth = useAuthStore()
 auth.loadFromStorage()
+const { t, locale } = useI18n()
 
-const displayName = computed(() => auth.user?.displayName ?? 'Usuário')
+const displayName = computed(() => auth.user?.displayName ?? t('app.user.default'))
 const initials = computed(() => getInitials(displayName.value))
 const greeting = computed(() => {
   const h = new Date().getHours()
-  if (h < 12) return 'dia'
-  if (h < 18) return 'tarde'
-  return 'noite'
+  if (h < 12) return t('app.greetTimes.day')
+  if (h < 18) return t('app.greetTimes.afternoon')
+  return t('app.greetTimes.evening')
 })
+
+function toggleLanguage() {
+  const next = locale.value === 'pt-BR' ? 'en' : 'pt-BR'
+  setLocale(next)
+}
 
 const loading = ref(false)
 const error = ref<string | null>(null)
@@ -274,7 +280,7 @@ async function refetch() {
     const data = await listContacts()
     contactsByDomain.value = data || {}
   } catch (e: any) {
-    error.value = e?.message || 'Erro ao carregar contatos'
+    error.value = e?.message || t('app.contacts.error')
   } finally {
     loading.value = false
   }
