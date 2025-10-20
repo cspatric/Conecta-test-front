@@ -21,7 +21,7 @@ function persistFromHashOnce() {
   const m = hash.match(/^#session=([^&]+)/)
   if (!m) return
   try {
-    const b64url = decodeURIComponent(m[1])
+    const b64url = decodeURIComponent(m[1] ?? '')
     let base = b64url.replace(/-/g, '+').replace(/_/g, '/')
     while (base.length % 4 !== 0) base += '='
     const json = atob(base)

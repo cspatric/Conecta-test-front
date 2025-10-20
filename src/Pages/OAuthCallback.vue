@@ -11,7 +11,7 @@ function decodeSessionFromHash() {
   const m = hash.match(/^#session=([^&]+)/)
   if (!m) return null
   try {
-    const b64 = decodeURIComponent(m[1])
+    const b64 = decodeURIComponent(m[1] ?? "")
     let base = b64.replace(/-/g, "+").replace(/_/g, "/")
     while (base.length % 4 !== 0) base += "="
     const json = atob(base)
