@@ -1,17 +1,14 @@
 <template>
-  <!-- Overlay -->
   <div
     v-if="open"
     class="fixed inset-0 z-40 bg-black/50 backdrop-blur-[1px] transition-opacity"
     @click="$emit('close')"
   />
 
-  <!-- Bottom-sheet -->
   <div
     v-if="open"
     class="fixed left-1/2 -translate-x-1/2 z-50 w-full max-w-[560px] px-4 pb-8"
     :class="[
-      // ancorado ao bottom com espaço
       'bottom-6',
     ]"
     role="dialog"
