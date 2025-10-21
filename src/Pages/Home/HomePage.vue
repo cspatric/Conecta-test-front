@@ -76,7 +76,7 @@
             viewBox="0 0 24 24"
             stroke="currentColor"
           >
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35M10 18a8 8 0 1 0 0-16 8 8 0  0 0 0 16z" />
           </svg>
           <input
             v-model.trim="q"
@@ -143,6 +143,16 @@
       <transition-group name="fab" tag="div" class="flex flex-col items-center gap-3">
         <button
           v-if="showFabActions"
+          key="create-contact"
+          type="button"
+          class="px-4 h-11 rounded-full bg-white text-[#111827] border border-[#E5E7EB] shadow-sm hover:bg-[#F3F4F6] transition"
+          @click.stop="openCreateContact"
+        >
+          {{ $t('app.actions.createContact', 'Criar contato') }}
+        </button>
+
+        <button
+          v-if="showFabActions"
           key="manual"
           type="button"
           class="px-4 h-11 rounded-full bg-white text-[#111827] border border-[#E5E7EB] shadow-sm hover:bg-[#F3F4F6] transition"
@@ -174,6 +184,7 @@
     </div>
 
     <EmailComposeModal v-model:open="composeOpen" :to="composeTo" />
+    <ContactCreateModal v-model:open="createOpen" @created="onContactCreated" />
     <AiChatModal
       :open="aiOpen"
       :system-goal="'Ajudar a gerenciar contatos e e-mails.'"
@@ -191,6 +202,7 @@ import { useRouter } from 'vue-router'
 import { listContacts } from '../../services/contacts'
 import { useAuthStore } from '../../stores/auth'
 import EmailComposeModal from '../../Pages/Home/Components/EmailComposeModal.vue'
+import ContactCreateModal from '../../Pages/Home/Components/ContactCreateModal.vue'
 import AiChatModal from '../../Pages/Home/Components/AiChatModal.vue'
 import { authLogout } from '../../services/auth'
 import { useI18n } from 'vue-i18n'
@@ -305,6 +317,15 @@ function openCreateManual() {
   showFabActions.value = false
   composeTo.value = ''
   composeOpen.value = true
+}
+
+const createOpen = ref(false)
+function openCreateContact() {
+  showFabActions.value = false
+  createOpen.value = true
+}
+function onContactCreated() {
+  refetch()
 }
 
 function goToMail() {

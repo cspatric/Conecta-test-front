@@ -1,4 +1,3 @@
-<!-- src/Pages/Home/Components/AiChatModal.vue -->
 <template>
   <teleport to="body">
     <div v-if="open" class="fixed inset-0 z-50">
@@ -31,9 +30,7 @@
             {{ error }}
           </div>
 
-          <!-- mensagens -->
           <template v-for="m in messages" :key="m.id">
-            <!-- bolha padrão (texto) -->
             <div
               v-if="m.kind === 'bubble'"
               class="max-w-[85%] rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap"
@@ -50,7 +47,6 @@
               <div>{{ m.content }}</div>
             </div>
 
-            <!-- lista de contatos -->
             <div v-else-if="m.kind === 'contacts_list'" class="mr-auto max-w-[95%]">
               <div class="text-[11px] uppercase tracking-wide text-[#6B7280] mb-2">
                 {{ $t('app.ai.contacts', 'Contatos') }}
@@ -75,7 +71,6 @@
               </div>
             </div>
 
-            <!-- lista de e-mails -->
             <div v-else-if="m.kind === 'email_list'" class="mr-auto max-w-[95%]">
               <div class="text-[11px] uppercase tracking-wide text-[#6B7280] mb-2">
                 {{ $t('app.ai.emails', 'E-mails') }}
@@ -115,7 +110,6 @@
             </div>
           </template>
 
-          <!-- bolinhas de typing -->
           <div v-if="sending" class="mr-auto max-w-[85%]">
             <div class="inline-flex items-center gap-2 rounded-2xl bg-white border border-[#E5E7EB] px-4 py-2">
               <span class="w-2.5 h-2.5 rounded-full animate-pulse bg-[#9CA3AF]"></span>
@@ -280,10 +274,8 @@ function tryFormatDate(s?: string | null) {
   }
 }
 
-// Normaliza a resposta do backend/Graph para lista de e-mails
 function normalizeEmailList(result: any): EmailListItem[] {
   if (!result) return []
-  // pode vir como { items: [...] } (teus serviços) ou { value: [...] } (Graph)
   const arr = Array.isArray(result.items) ? result.items
             : Array.isArray(result.value) ? result.value
             : []
@@ -304,7 +296,6 @@ async function send() {
   if (!content || sending.value) return
   error.value = null
 
-  // bolha do usuário
   messages.value.push({ id: uid(), role: 'user', kind: 'bubble', content })
   input.value = ''
   await nextTick()
@@ -322,18 +313,15 @@ async function send() {
 
     const data = await runAI(payload)
 
-    // Fallback pra compat — se backend retornar string
     if (typeof data === 'string') {
       messages.value.push({ id: uid(), role: 'assistant', kind: 'bubble', content: data })
       return
     }
 
-    // 1) sempre mostra a mensagem do plano
     const plan = data.plan as Plan
     const respMessage = plan?.message || t('app.ai.ok', 'OK.')
     messages.value.push({ id: uid(), role: 'assistant', kind: 'bubble', content: respMessage })
 
-    // 2) contatos
     if ((plan?.message_type === 'contacts_list' || plan?.action === 'list_contacts')
         && data.result?.items?.length) {
       messages.value.push({
@@ -344,7 +332,6 @@ async function send() {
       })
     }
 
-    // 3) e-mails (inbox/sent) — agora usando result.value do Graph
     if ((plan?.message_type === 'email_list' || plan?.action === 'list_inbox' || plan?.action === 'list_sent')) {
       const emails = normalizeEmailList(data.result)
       if (emails.length) {
@@ -357,9 +344,7 @@ async function send() {
       }
     }
 
-    // 4) erros amigáveis (ex.: unknown_action vindo do backend)
     if (data.error && plan?.action === 'chat_reply') {
-      // papo informal: ignoramos o erro operacional
     } else if (data.error) {
       error.value = data.error
     }
