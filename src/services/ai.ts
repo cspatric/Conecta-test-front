@@ -1,3 +1,4 @@
+// src/services/ai.ts
 import { http } from "../lib/http";
 
 function readToken(): string {
@@ -14,6 +15,32 @@ function readToken(): string {
   }
 }
 
+export type MessageType =
+  | "small_talk"
+  | "text"
+  | "contacts_list"
+  | "contact_detail"
+  | "email_list"
+  | "email_detail"
+  | "email_sent"
+  | "system"
+  | "error";
+
+export type Plan = {
+  action: string;
+  params: Record<string, unknown>;
+  reason: string;
+  confidence: number;
+  message: string;
+  message_type: MessageType;
+};
+
+export type AiResponse = {
+  plan: Plan;
+  result?: any;
+  error?: string;
+} | string;
+
 export type AiRequest = {
   prompt: string;
   goal?: string;
@@ -22,15 +49,24 @@ export type AiRequest = {
   tools?: string[];
 };
 
-export type AiResponse = any;
-
 export async function runAI(payload: AiRequest): Promise<AiResponse> {
   if (!payload?.prompt?.trim()) {
     throw new Error("prompt é obrigatório");
   }
   const token = readToken();
-  const { data } = await http.post("/ai/", payload, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return data;
+
+  try {
+    const { data } = await http.post("/ai/", payload, {
+      headers: { Authorization: `Bearer ${token}` },
+      timeout: 60_000, // defensivo
+    });
+    return data; // 2xx
+  } catch (err: any) {
+    // Se a API respondeu algo (mesmo em 4xx/5xx), retornamos esse payload pro caller tratar
+    const data = err?.response?.data;
+    if (data) return data as AiResponse;
+
+    // Falha sem payload (ex.: rede/CORS). Rejogamos a exceção.
+    throw err;
+  }
 }

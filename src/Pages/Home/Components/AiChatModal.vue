@@ -33,7 +33,9 @@
 
           <!-- mensagens -->
           <template v-for="m in messages" :key="m.id">
+            <!-- bolha padrão (texto) -->
             <div
+              v-if="m.kind === 'bubble'"
               class="max-w-[85%] rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap"
               :class="m.role === 'user'
                 ? 'ml-auto bg-[#5235E8] text-white rounded-br-md'
@@ -46,6 +48,70 @@
                 {{ $t('app.ai.you', 'Você') }}
               </div>
               <div>{{ m.content }}</div>
+            </div>
+
+            <!-- lista de contatos -->
+            <div v-else-if="m.kind === 'contacts_list'" class="mr-auto max-w-[95%]">
+              <div class="text-[11px] uppercase tracking-wide text-[#6B7280] mb-2">
+                {{ $t('app.ai.contacts', 'Contatos') }}
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div
+                  v-for="c in m.contacts"
+                  :key="c.id"
+                  class="bg-white border border-[#E5E7EB] rounded-xl p-3"
+                >
+                  <div class="font-medium text-[#111827]">{{ c.displayName || '—' }}</div>
+                  <div class="text-xs text-[#6B7280]">
+                    <span v-if="c.companyName">{{ c.companyName }}</span>
+                    <span v-if="c.jobTitle"> • {{ c.jobTitle }}</span>
+                  </div>
+                  <div class="mt-2 space-y-1 text-sm">
+                    <div v-if="c.emails?.length">📧 {{ c.emails[0] }}</div>
+                    <div v-if="c.mobilePhone">📱 {{ c.mobilePhone }}</div>
+                    <div v-else-if="c.businessPhones?.length">☎️ {{ c.businessPhones[0] }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- lista de e-mails -->
+            <div v-else-if="m.kind === 'email_list'" class="mr-auto max-w-[95%]">
+              <div class="text-[11px] uppercase tracking-wide text-[#6B7280] mb-2">
+                {{ $t('app.ai.emails', 'E-mails') }}
+              </div>
+              <div class="grid grid-cols-1 gap-3">
+                <div
+                  v-for="em in m.emails"
+                  :key="em.id"
+                  class="bg-white border border-[#E5E7EB] rounded-xl p-3"
+                >
+                  <div class="flex items-start justify-between gap-3">
+                    <div>
+                      <div class="font-medium text-[#111827] line-clamp-1">
+                        {{ em.subject || '(sem assunto)' }}
+                      </div>
+                      <div class="text-xs text-[#6B7280]">
+                        {{ em.fromName || em.fromEmail || '—' }}
+                        <span class="mx-1">•</span>
+                        {{ tryFormatDate(em.receivedDateTime) }}
+                      </div>
+                    </div>
+                    <a
+                      v-if="em.webLink"
+                      :href="em.webLink"
+                      target="_blank"
+                      rel="noopener"
+                      class="text-xs text-[#5235E8] hover:underline shrink-0"
+                    >
+                      {{ $t('app.ai.open', 'Abrir') }}
+                    </a>
+                  </div>
+                  <div class="mt-2 text-sm text-[#111827]/90 line-clamp-2">
+                    {{ em.bodyPreview }}
+                  </div>
+                </div>
+              </div>
             </div>
           </template>
 
@@ -103,7 +169,53 @@ import { ref, watch, nextTick, computed } from 'vue'
 import { runAI, type AiRequest } from '../../../services/ai'
 import { useI18n } from 'vue-i18n'
 
-type Message = { id: string; role: 'user' | 'assistant'; content: string }
+type MessageKind = 'bubble' | 'contacts_list' | 'email_list'
+type Role = 'user' | 'assistant'
+
+type Contact = {
+  id: string
+  displayName?: string | null
+  companyName?: string | null
+  jobTitle?: string | null
+  emails?: string[] | null
+  businessPhones?: string[] | null
+  mobilePhone?: string | null
+}
+
+type EmailListItem = {
+  id: string
+  subject?: string | null
+  fromName?: string | null
+  fromEmail?: string | null
+  receivedDateTime?: string | null
+  isRead?: boolean | null
+  bodyPreview?: string | null
+  webLink?: string | null
+}
+
+type Message =
+  | { id: string; role: Role; kind: 'bubble'; content: string }
+  | { id: string; role: 'assistant'; kind: 'contacts_list'; contacts: Contact[] }
+  | { id: string; role: 'assistant'; kind: 'email_list'; emails: EmailListItem[] }
+
+type Plan = {
+  action: string
+  params: Record<string, any>
+  reason: string
+  confidence: number
+  message: string
+  message_type:
+    | 'small_talk' | 'text'
+    | 'contacts_list' | 'contact_detail'
+    | 'email_list' | 'email_detail' | 'email_sent'
+    | 'system' | 'error'
+}
+
+type AiResponse = {
+  plan: Plan
+  result?: any
+  error?: string
+} | string
 
 const { t } = useI18n()
 
@@ -159,12 +271,41 @@ const uid = () =>
     ? crypto.randomUUID()
     : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
 
+function tryFormatDate(s?: string | null) {
+  if (!s) return '—'
+  try {
+    return new Date(s).toLocaleString()
+  } catch {
+    return s
+  }
+}
+
+// Normaliza a resposta do backend/Graph para lista de e-mails
+function normalizeEmailList(result: any): EmailListItem[] {
+  if (!result) return []
+  // pode vir como { items: [...] } (teus serviços) ou { value: [...] } (Graph)
+  const arr = Array.isArray(result.items) ? result.items
+            : Array.isArray(result.value) ? result.value
+            : []
+  return arr.map((m: any) => ({
+    id: m.id,
+    subject: m.subject ?? null,
+    fromName: m.from?.emailAddress?.name ?? m.fromName ?? null,
+    fromEmail: m.from?.emailAddress?.address ?? m.fromEmail ?? null,
+    receivedDateTime: m.receivedDateTime ?? null,
+    isRead: m.isRead ?? null,
+    bodyPreview: m.bodyPreview ?? null,
+    webLink: m.webLink ?? null
+  }))
+}
+
 async function send() {
   const content = input.value.trim()
   if (!content || sending.value) return
   error.value = null
 
-  messages.value.push({ id: uid(), role: 'user', content })
+  // bolha do usuário
+  messages.value.push({ id: uid(), role: 'user', kind: 'bubble', content })
   input.value = ''
   await nextTick()
   inputRef.value?.focus()
@@ -178,13 +319,51 @@ async function send() {
       constraints: props.systemConstraints,
       tools: props.tools,
     }
-    const data = await runAI(payload)
-    const reply =
-      typeof data === 'string'
-        ? data
-        : data?.message || data?.reply || JSON.stringify(data, null, 2)
 
-    messages.value.push({ id: uid(), role: 'assistant', content: reply || t('app.ai.ok', 'OK.') })
+    const data = await runAI(payload)
+
+    // Fallback pra compat — se backend retornar string
+    if (typeof data === 'string') {
+      messages.value.push({ id: uid(), role: 'assistant', kind: 'bubble', content: data })
+      return
+    }
+
+    // 1) sempre mostra a mensagem do plano
+    const plan = data.plan as Plan
+    const respMessage = plan?.message || t('app.ai.ok', 'OK.')
+    messages.value.push({ id: uid(), role: 'assistant', kind: 'bubble', content: respMessage })
+
+    // 2) contatos
+    if ((plan?.message_type === 'contacts_list' || plan?.action === 'list_contacts')
+        && data.result?.items?.length) {
+      messages.value.push({
+        id: uid(),
+        role: 'assistant',
+        kind: 'contacts_list',
+        contacts: data.result.items
+      })
+    }
+
+    // 3) e-mails (inbox/sent) — agora usando result.value do Graph
+    if ((plan?.message_type === 'email_list' || plan?.action === 'list_inbox' || plan?.action === 'list_sent')) {
+      const emails = normalizeEmailList(data.result)
+      if (emails.length) {
+        messages.value.push({
+          id: uid(),
+          role: 'assistant',
+          kind: 'email_list',
+          emails
+        })
+      }
+    }
+
+    // 4) erros amigáveis (ex.: unknown_action vindo do backend)
+    if (data.error && plan?.action === 'chat_reply') {
+      // papo informal: ignoramos o erro operacional
+    } else if (data.error) {
+      error.value = data.error
+    }
+
   } catch (e: any) {
     error.value =
       e?.response?.data?.message ||
@@ -193,6 +372,7 @@ async function send() {
     messages.value.push({
       id: uid(),
       role: 'assistant',
+      kind: 'bubble',
       content: t('app.ai.cantNow', 'Não consegui processar isso agora.')
     })
   } finally {
