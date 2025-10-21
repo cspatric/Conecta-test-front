@@ -11,7 +11,9 @@
         aria-labelledby="ai-chat-title"
       >
         <header class="px-5 sm:px-6 py-4 border-b border-black/5 flex items-center justify-between">
-          <h2 id="ai-chat-title" class="text-lg font-semibold text-[#111827]">{{ $t('app.ai.title', 'Assistente IA') }}</h2>
+          <h2 id="ai-chat-title" class="text-lg font-semibold text-[#111827]">
+            {{ $t('app.ai.title', 'Assistente IA') }}
+          </h2>
           <button
             class="w-9 h-9 grid place-items-center rounded-xl hover:bg-[#F3F4F6] transition"
             :aria-label="$t('app.actions.close', 'Fechar')"
@@ -29,19 +31,25 @@
             {{ error }}
           </div>
 
-          <template v-for="(m, idx) in messages" :key="idx">
+          <!-- mensagens -->
+          <template v-for="m in messages" :key="m.id">
             <div
               class="max-w-[85%] rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap"
               :class="m.role === 'user'
                 ? 'ml-auto bg-[#5235E8] text-white rounded-br-md'
                 : 'mr-auto bg-white border border-[#E5E7EB] text-[#111827] rounded-bl-md'"
             >
-              <div v-if="m.role !== 'user'" class="text-[11px] uppercase tracking-wide text-[#6B7280] mb-1">{{ $t('app.ai.assistant', 'IA') }}</div>
-              <div v-if="m.role === 'user'" class="text-[11px] uppercase tracking-wide text-white/80 mb-1">{{ $t('app.ai.you', 'Você') }}</div>
+              <div v-if="m.role !== 'user'" class="text-[11px] uppercase tracking-wide text-[#6B7280] mb-1">
+                {{ $t('app.ai.assistant', 'IA') }}
+              </div>
+              <div v-else class="text-[11px] uppercase tracking-wide text-white/80 mb-1">
+                {{ $t('app.ai.you', 'Você') }}
+              </div>
               <div>{{ m.content }}</div>
             </div>
           </template>
 
+          <!-- bolinhas de typing -->
           <div v-if="sending" class="mr-auto max-w-[85%]">
             <div class="inline-flex items-center gap-2 rounded-2xl bg-white border border-[#E5E7EB] px-4 py-2">
               <span class="w-2.5 h-2.5 rounded-full animate-pulse bg-[#9CA3AF]"></span>
@@ -71,7 +79,9 @@
             </button>
           </div>
           <div class="mt-2 flex items-center justify-between">
-            <div class="text-xs text-[#6B7280]">{{ $t('app.ai.hint', 'Use linguagem natural para acionar o agente.') }}</div>
+            <div class="text-xs text-[#6B7280]">
+              {{ $t('app.ai.hint', 'Use linguagem natural para acionar o agente.') }}
+            </div>
             <button
               v-if="canClear"
               type="button"
@@ -93,7 +103,7 @@ import { ref, watch, nextTick, computed } from 'vue'
 import { runAI, type AiRequest } from '../../../services/ai'
 import { useI18n } from 'vue-i18n'
 
-type Message = { role: 'user' | 'assistant'; content: string }
+type Message = { id: string; role: 'user' | 'assistant'; content: string }
 
 const { t } = useI18n()
 
@@ -144,12 +154,17 @@ function clearChat() {
   nextTick(() => inputRef.value?.focus())
 }
 
+const uid = () =>
+  typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+
 async function send() {
   const content = input.value.trim()
   if (!content || sending.value) return
   error.value = null
 
-  messages.value.push({ role: 'user', content })
+  messages.value.push({ id: uid(), role: 'user', content })
   input.value = ''
   await nextTick()
   inputRef.value?.focus()
@@ -164,13 +179,22 @@ async function send() {
       tools: props.tools,
     }
     const data = await runAI(payload)
-    const reply = typeof data === 'string'
-      ? data
-      : data?.message || data?.reply || JSON.stringify(data, null, 2)
-    messages.value.push({ role: 'assistant', content: reply || t('app.ai.ok', 'OK.') })
+    const reply =
+      typeof data === 'string'
+        ? data
+        : data?.message || data?.reply || JSON.stringify(data, null, 2)
+
+    messages.value.push({ id: uid(), role: 'assistant', content: reply || t('app.ai.ok', 'OK.') })
   } catch (e: any) {
-    error.value = e?.response?.data?.message || e?.message || t('app.ai.errors.fail', 'Falha ao consultar o agente.')
-    messages.value.push({ role: 'assistant', content: t('app.ai.cantNow', 'Não consegui processar isso agora.') })
+    error.value =
+      e?.response?.data?.message ||
+      e?.message ||
+      t('app.ai.errors.fail', 'Falha ao consultar o agente.')
+    messages.value.push({
+      id: uid(),
+      role: 'assistant',
+      content: t('app.ai.cantNow', 'Não consegui processar isso agora.')
+    })
   } finally {
     sending.value = false
   }
